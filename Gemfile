@@ -15,3 +15,5 @@ gem "activesupport", "~> 6.1"
 gem "faraday", "~> 1.3"
 
 gem "thread_safe", "~> 0.3.6"
+
+gem "pry"
