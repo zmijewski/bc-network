@@ -1,0 +1,23 @@
+version: "3.9"
+services:
+  master_node:
+    build: .
+    expose:
+      - 80
+    volumes:
+      - .:/app
+    command: ruby server.rb
+    stdin_open: true
+    tty: true
+  agent_node:
+    build: .
+    expose:
+      - 80
+    volumes:
+      - .:/app
+    command: ruby client.rb
+    stdin_open: true
+    tty: true
+    depends_on:
+      - master_node
+

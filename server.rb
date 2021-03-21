@@ -4,20 +4,21 @@ require "json"
 require "set"
 
 host = "127.0.0.1"
-port = 2000
+port = 80
 
-peers_ports = Set.new([])
+peers = Set.new([])
 
 Socket.tcp_server_loop(port) do |socket|
    result = JSON.parse(socket.read)
-   socket.write(peers_ports.to_a)
    if result["event"] == "add"
-      puts "Add id #{result['id']}"
-      peers_ports.add(result["port"])
+      puts "Add address #{result['address']}"
+      peers.add(result["address"])
    elsif result["event"] == "remove"
-      puts "Remove id #{result['id']}"
-      peers_ports.delete(result["port"])
+      puts "Remove address #{result['address']}"
+      peers.delete(result["address"])
    end
+   socket.write(peers.to_a)
+   puts "Current peer list #{peers}"
 ensure
    socket.close
 end
