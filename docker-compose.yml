@@ -1,6 +1,6 @@
 version: "3.9"
 services:
-  master_node:
+  discovery_node:
     build: .
     expose:
       - 80
@@ -9,7 +9,7 @@ services:
     command: ruby server.rb
     stdin_open: true
     tty: true
-  agent_node:
+  full_node:
     build: .
     expose:
       - 80
@@ -19,5 +19,5 @@ services:
     stdin_open: true
     tty: true
     depends_on:
-      - master_node
+      - discovery_node
 
