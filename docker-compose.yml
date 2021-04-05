@@ -6,7 +6,8 @@ services:
       - 80
     volumes:
       - .:/app
-    command: ruby server.rb
+    command: bash
+    # command: ruby discovery_node.rb
     stdin_open: true
     tty: true
   full_node:
@@ -15,7 +16,8 @@ services:
       - 80
     volumes:
       - .:/app
-    command: ruby client.rb
+    command: bash
+    # command: ruby full_node.rb
     stdin_open: true
     tty: true
     depends_on:

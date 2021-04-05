@@ -1,82 +1,88 @@
 module Nodes
-  module Node
+  module Full
     class Client
-      attr_reader :host, :port, :peers, :discovery
+      attr_reader :peer, :peers, :discovery
 
       def initialize(
-        host: IPSocket.getaddress(Socket.gethostname),
-        port: 80,
+        peer: Peer.new(host: IPSocket.getaddress(Socket.gethostname), port: 80),
         peers: Concurrent::Set.new,
         discovery: nil
       )
-        @host      = host
-        @port      = 80
-        @peers     = Concurrent::Set.new([])
+        @peer      = peer
+        @peers     = peers
         @discovery = discovery
 
         sync_discovery
-      end
 
-      def gossip_with(peer:)
-        begin
-          TCPSocket.open(peer.host, peer.port) do |socket|
-            socket.write(gossip_message)
-            socket.close_write
+        Thread.new do
+          loop do
+            other_peer = peers.to_a.sample
+            next unless other_peer
+
+            LOGGER.info("[#{peer}] I gossip with #{other_peer}")
+            gossip_with(other_peer: other_peer)
+            sleep(rand(3..5))
           end
-        rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH => e
-          peers.delete(peer_address)
-        ensure
-          socket.close
         end
       end
 
+      def gossip_with(other_peer:)
+        TCPSocket.open(other_peer.host, other_peer.port) do |socket|
+          socket.write(gossip_message)
+          socket.close_write
+          socket.close
+        end
+      rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH => e
+        peers.delete(other_peer)
+      end
+
       def sync_discovery
-        TCPSocket.open(discovery.host, discovery.port) do |socket|
+        TCPSocket.open(discovery.peer.host, discovery.peer.port) do |socket|
           socket.write(sync_discovery_message)
           socket.close_write
-
-          discovery_peers = JSON.parse(socket.read)
+          discovery_peers = JSON.parse(socket.read).map { |other_peer| Peer.new(other_peer) }
+          socket.close
 
           peers.merge(discovery_peers)
           # make sure client host is not in the peers
-          peers.delete(host)
-        ensure
-          socket.close
+          peers.delete(peer)
+          LOGGER.info("My peers #{peers.map(&:to_s).join(", ")}")
         end
       end
 
       def notify_discovery_server_down
-        TCPSocket.open(discovery.host, discovery.port) do |socket|
+        TCPSocket.open(discovery.peer.host, discovery.peer.port) do |socket|
           socket.write(shutdown_message)
           socket.close_write
-        ensure
           socket.close
         end
       end
 
       def notify_peers_server_down
-        peers.each do |peer|
+        peers.each do |other_peer|
           begin
-            TCPSocket.open(peer.host, peer.port) do |socket|
+            TCPSocket.open(other_peer.host, other_peer.port) do |socket|
               socket.write(shutdown_message)
               socket.close_write
+              socket.close
             end
           rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH => e
-            # cannot reach the peer
-          ensure
-            socket.close
+            # cannot reach the other_peer
           end
         end
       end
 
-      def update_peers(other_peers:)
-        peers.merge(other_peers)
+      def update_peers(request)
+        other_peers = request["peers"] + [(request["peer"])]
+        peers.merge(other_peers.map { |other_peer| Peer.new(other_peer) })
         # make sure client host is not in the peers
-        peers.delete(host)
+        peers.delete(peer)
+        LOGGER.info("Peers after update: #{peers.map(&:to_s).join(", ")}")
       end
 
-      def delete_peer(other_peer:)
-        peers.delete(other_peer)
+      def delete_peer(request)
+        peers.delete(Peer.new(request["peer"]))
+        LOGGER.info("Peers after delete: #{peers.map(&:to_s).join(", ")}")
       end
 
       def update_blockchain
@@ -86,26 +92,23 @@ module Nodes
 
       def gossip_message
         {
-          host: host,
-          port: port,
+          peer: peer.to_hash,
           event: "update",
           blockchain: "blockchain",
-          peers: peers.to_a,
+          peers: peers.map(&:to_hash),
         }.to_json
       end
 
       def sync_discovery_message
         {
-          host: host,
-          port: port,
+          peer: peer.to_hash,
           event: "update",
         }.to_json
       end
 
       def shutdown_message
         {
-          host: host,
-          port: port,
+          peer: peer.to_hash,
           event: "remove",
         }.to_json
       end

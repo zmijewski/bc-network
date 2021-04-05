@@ -1,13 +1,7 @@
-require "socket"
-require "pry"
-require "json"
-require "set"
-require "concurrent-ruby"
+$BC_NODE = :discovery_node
 
-require "nodes/discovery/config.rb"
-require "nodes/discovery/server.rb"
+require "./config/environment"
 
 discovery = Nodes::Discovery::Config.new
 server    = Nodes::Discovery::Server.new(config: discovery)
 server.run
-

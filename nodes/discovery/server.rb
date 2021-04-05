@@ -6,13 +6,13 @@ module Nodes
       end
 
       def run
-        Socket.tcp_server_loop(config.port) do |socket|
+        Socket.tcp_server_loop(config.peer.port) do |socket|
           Thread.new do
             handle_request(socket)
           end
-        ensure
-          socket.close
         end
+      rescue Interrupt, SignalException => e
+        LOGGER.info("Discovery serves goes down!")
       end
 
       private
@@ -21,15 +21,19 @@ module Nodes
 
       def handle_request(socket)
         request = JSON.parse(socket.read)
+        peer = Peer.new(request["peer"])
 
         case request["event"]
         when "update"
-          config.peers.add({ host: request["host"], port: request["port"] })
+          LOGGER.info("New peer is joining our network: #{peer}")
+          config.peers.add(peer)
         when "remove"
-          config.peers.delete({ host: request["host"], port: request["port"] })
+          config.peers.delete(peer)
+          LOGGER.info("#{peer} peer has left our network: #{peer}")
         end
 
-        socket.write(config.peers.to_a)
+        socket.write(config.peers.map(&:to_hash).to_json)
+        socket.close
       end
     end
   end

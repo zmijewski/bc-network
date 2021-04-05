@@ -1,11 +1,13 @@
 module Nodes
   module Discovery
-    class DiscoveryConfig
-      attr_reader :host, :port, :peers
+    class Config
+      attr_reader :peer, :peers
 
-      def initialize(host: "discovery", port: 80, peers: Set.new)
-        @host  = host
-        @port  = port
+      def initialize(
+        peer: Peer.new(host: "discovery_node", port: 80),
+        peers: Set.new
+      )
+        @peer  = peer
         @peers = peers
       end
     end

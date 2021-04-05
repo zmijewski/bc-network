@@ -1,38 +1,35 @@
 module Nodes
-  module Node
+  module Full
     class Server
-      def initialize(client)
+      def initialize(client:)
         @client = client
       end
 
       def run
-        begin
-          Socket.tcp_server_loop(client.port) do |socket|
-            Thread.new do
-              handle_request(socket)
-            end
-          ensure
-            socket.close
+        Socket.tcp_server_loop(client.peer.port) do |socket|
+          request = JSON.parse(socket.read)
+          Thread.new do
+            handle_request(request)
           end
-        rescue Interrupt, SignalException => e
-          client.notify_peers_server_down
-          client.notify_master_server_down
-          exit 0
+          socket.close
         end
+      rescue Interrupt, SignalException => e
+        LOGGER.info("I am leaving! :bye:")
+        client.notify_peers_server_down
+        client.notify_discovery_server_down
+        exit 0
       end
 
       private
 
       attr_reader :client
 
-      def handle_request(socket)
-        request = JSON.parse(socket.read)
-
+      def handle_request(request)
         case request["event"]
         when "update"
-          client.update_peers(other_peers: Concurrent::Set.new(request["peers"]))
+          client.update_peers(request)
         when "remove"
-          client.delete_peer(other_peer: request["host"])
+          client.delete_peer(request)
         end
       end
     end
