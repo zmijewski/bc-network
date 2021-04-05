@@ -1,10 +1,12 @@
+# frozen_string_literal: true
+
 class Peer
   attr_reader :host, :port
 
   def initialize(peer)
     peer.transform_keys!(&:to_sym)
 
-    fail PeerAttributeMissingError unless peer[:host] && peer[:port]
+    raise PeerAttributeMissingError unless peer[:host] && peer[:port]
 
     @host = peer[:host]
     @port = peer[:port]
