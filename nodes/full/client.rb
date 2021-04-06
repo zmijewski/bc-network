@@ -5,29 +5,28 @@ module Nodes
     class Client
       extend Dry::Initializer
 
-      attr_reader :peer, :peers, :discovery
+      attr_reader :peer, :discovery
 
-      option :peer,      default: proc { Peer.new(host: IPSocket.getaddress(Socket.gethostname), port: 80) }
-      option :peers,     default: proc { Concurrent::Set.new }
-      option :protocol,  default: proc { Protocols::TCPClient.new }
+      option :peer,            default: proc { Peer.new(host: IPSocket.getaddress(Socket.gethostname), port: 80) }
+      option :peers_aggregate, default: proc { Aggregates::Peers.new(owner: peer) }
+      option :protocol,        default: proc { Protocols::TCPClient.new }
       option :discovery
 
       def gossip_with(other_peer:)
         send(message: gossip_message, other_peer: other_peer)
       rescue Protocols::Exceptions::ConnectionError
-        peers.delete(other_peer)
+        peers_aggregate.delete(other_peer)
       end
 
       def sync_discovery
-        result = send(message: sync_discovery_message, other_peer: discovery.peer)
+        result = send(message: sync_discovery_message, other_peer: discovery)
         discovery_peers = result.map { |other_peer| Peer.new(other_peer) }
 
-        peers.merge(discovery_peers)
-        peers.delete(peer)
+        peers_aggregate.create(discovery_peers)
       end
 
       def notify_discovery_server_down
-        send(message: shutdown_message, other_peer: discovery.peer)
+        send(message: shutdown_message, other_peer: discovery)
       end
 
       def notify_peers_server_down
@@ -41,17 +40,21 @@ module Nodes
       end
 
       def update_peers(request)
-        other_peers = request['peers'] + [(request['peer'])]
-        peers.merge(other_peers.map { |other_peer| Peer.new(other_peer) })
-        # make sure client host is not in the peers
-        peers.delete(peer)
+        requested_peers_data = request['peers'] + [(request['peer'])]
+        other_peers = requested_peers_data.map { |other_peer| Peer.new(other_peer) }
+
+        peers_aggregate.create(other_peers)
       end
 
       def delete_peer(request)
-        peers.delete(Peer.new(request['peer']))
+        peers_aggregate.delete(Peer.new(request['peer']))
       end
 
       def update_blockchain; end
+
+      def peers
+        peers_aggregate.peers
+      end
 
       private
 
