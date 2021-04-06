@@ -1,0 +1,25 @@
+version: "3.9"
+services:
+  discovery_node:
+    build: .
+    expose:
+      - 80
+    volumes:
+      - .:/app
+    # command: bash
+    command: ruby discovery_node.rb
+    stdin_open: true
+    tty: true
+  full_node:
+    build: .
+    expose:
+      - 80
+    volumes:
+      - .:/app
+    # command: bash
+    command: ruby full_node.rb
+    stdin_open: true
+    tty: true
+    depends_on:
+      - discovery_node
+

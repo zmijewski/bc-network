@@ -1,0 +1,8 @@
+Style/Documentation:
+  Enabled: false
+
+Lint/ShadowedException:
+  Enabled: false
+
+Style/GlobalVars:
+  Enabled: false
