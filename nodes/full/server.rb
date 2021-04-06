@@ -21,14 +21,19 @@ module Nodes
       attr_reader :client
 
       def handle_request(request)
+        response = {}
+
         case request['event']
         when 'update'
           client.update_peers(request)
+          client.update_blockchain(request)
         when 'remove'
           client.delete_peer(request)
+        when 'public_key'
+          response = client.public_key_response
         end
 
-        {}.to_json
+        response.to_json
       end
 
       def shutdown_gracefully
