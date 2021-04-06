@@ -2,7 +2,7 @@ $BC_NODE = :full_node
 
 require './config/environment'
 
-discovery = Nodes::Discovery::Config.new
+discovery = Peer.new(host: 'discovery_node', port: 80)
 
 client = Nodes::Full::Client.new(discovery: discovery)
 server = Nodes::Full::Server.new(client: client)
