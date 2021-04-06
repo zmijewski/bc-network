@@ -9,6 +9,7 @@ require 'concurrent-ruby'
 require 'logger'
 
 require './value_objects/peer'
+require './protocols/tcp'
 
 LOGGER = Logger.new($stdout)
 

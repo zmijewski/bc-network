@@ -6,14 +6,13 @@ module Nodes
       extend Dry::Initializer
 
       option :client
+      option :protocol, default: proc { Protocols::TCPServer.new }
 
       def run
-        Socket.tcp_server_loop(client.peer.port) do |socket|
-          request = JSON.parse(socket.read)
-          Thread.new { handle_request(request) }
-          socket.close
+        protocol.listen(peer: client.peer) do |request|
+          handle_request(request)
         end
-      rescue Interrupt, SignalException
+      rescue ::Protocols::Exceptions::ServerShutdown
         shutdown_gracefully
       end
 
@@ -28,6 +27,8 @@ module Nodes
         when 'remove'
           client.delete_peer(request)
         end
+
+        {}.to_json
       end
 
       def shutdown_gracefully

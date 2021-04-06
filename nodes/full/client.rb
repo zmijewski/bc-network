@@ -9,32 +9,32 @@ module Nodes
 
       option :peer,      default: proc { Peer.new(host: IPSocket.getaddress(Socket.gethostname), port: 80) }
       option :peers,     default: proc { Concurrent::Set.new }
+      option :protocol,  default: proc { Protocols::TCPClient.new }
       option :discovery
 
       def gossip_with(other_peer:)
-        send(other_peer: other_peer, message: gossip_message)
-      rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH => e
+        send(message: gossip_message, other_peer: other_peer)
+      rescue Protocols::Exceptions::ConnectionError
         peers.delete(other_peer)
       end
 
       def sync_discovery
-        result = send(other_peer: discovery.peer, message: sync_discovery_message)
-        discovery_peers = JSON.parse(result).map { |other_peer| Peer.new(other_peer) }
+        result = send(message: sync_discovery_message, other_peer: discovery.peer)
+        discovery_peers = result.map { |other_peer| Peer.new(other_peer) }
+
         peers.merge(discovery_peers)
-        # make sure client host is not in the peers
         peers.delete(peer)
-        LOGGER.info("My peers #{peers.map(&:to_s).join(', ')}")
       end
 
       def notify_discovery_server_down
-        send(other_peer: discovery.peer, message: shutdown_message)
+        send(message: shutdown_message, other_peer: discovery.peer)
       end
 
       def notify_peers_server_down
         peers.each do |other_peer|
           begin
-            send(other_peer: other_peer, message: shutdown_message)
-          rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH
+            send(message: shutdown_message, other_peer: other_peer)
+          rescue Protocols::Exceptions::ConnectionError
             # cannot reach the other_peer
           end
         end
@@ -55,16 +55,9 @@ module Nodes
 
       private
 
-      def send(other_peer:, message:)
+      def send(message:, other_peer:)
         LOGGER.info("[#{peer}] I gossip with #{other_peer}")
-        result = nil
-        TCPSocket.open(other_peer.host, other_peer.port) do |socket|
-          socket.write(message)
-          socket.close_write
-          result = socket.read
-          socket.close
-        end
-        result
+        protocol.send(message: message, peer: other_peer)
       end
 
       def gossip_message

@@ -6,17 +6,13 @@ module Nodes
       extend Dry::Initializer
 
       option :config
+      option :protocol, default: proc { Protocols::TCPServer.new }
 
       def run
-        Socket.tcp_server_loop(config.peer.port) do |socket|
-          Thread.new do
-            request = JSON.parse(socket.read)
-            handle_request(request)
-            socket.write(config.peers.map(&:to_hash).to_json)
-            socket.close
-          end
+        protocol.listen(peer: config.peer) do |request|
+          handle_request(request)
         end
-      rescue Interrupt, SignalException
+      rescue ::Protocols::Exceptions::ServerShutdown
         LOGGER.info('Discovery serves goes down!')
       end
 
@@ -33,6 +29,8 @@ module Nodes
         when 'remove'
           config.peers.delete(peer)
         end
+
+        config.peers.map(&:to_hash).to_json
       end
     end
   end
