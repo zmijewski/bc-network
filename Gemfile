@@ -20,4 +20,4 @@ gem 'pry'
 
 gem 'rubocop', '~> 1.12'
 
-gem "dry-initializer", "~> 3.0"
+gem 'dry-initializer', '~> 3.0'

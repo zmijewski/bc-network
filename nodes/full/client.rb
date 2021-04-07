@@ -7,19 +7,20 @@ module Nodes
 
       attr_reader :peer, :discovery, :public_key
 
-      option :peer,            default: proc { Peer.new(host: IPSocket.getaddress(Socket.gethostname), port: 80) }
-      option :peers_aggregate, default: proc { Aggregates::Peers.new(owner: peer) }
-      option :protocol,        default: proc { Protocols::TCPClient.new }
+      option :peer,            default: proc { ::Peer.new(host: IPSocket.getaddress(Socket.gethostname), port: 80) }
+      option :peers_aggregate, default: proc { ::Aggregates::Peers.new(owner: peer) }
+      option :protocol,        default: proc { ::Protocols::TCP::Client.new }
       option :public_key
       option :private_key
-      option :blockchain,      default: proc { nil }
+      option :blockchain, default: proc { nil }
       option :discovery
 
       def send_money(other_peer:)
         other_peer_public_key = get_public_key(other_peer: other_peer)['public_key']
 
         amount      = [rand(1..@blockchain.compute_balances[public_key]), 500].min
-        transaction = Transaction.new(public_key, other_peer_public_key, amount, private_key)
+        transaction = Transaction.new(from: public_key, to: other_peer_public_key, amount: amount,
+                                      private_key: private_key)
 
         @blockchain.add_to_chain(transaction)
       end
@@ -38,8 +39,7 @@ module Nodes
 
         return unless peers.empty?
 
-        LOGGER.info("I am progenitor!")
-        @blockchain = BlockChain.new(public_key, private_key)
+        @blockchain = BlockChain.new(public_key: public_key, private_key: private_key)
       end
 
       def notify_discovery_server_down
@@ -58,7 +58,7 @@ module Nodes
 
       def update_peers(request)
         requested_peers_data = request['peers'] + [(request['peer'])]
-        other_peers = requested_peers_data.map { |other_peer| Peer.new(other_peer) }
+        other_peers = requested_peers_data.map { |other_peer| ::Peer.new(other_peer) }
 
         peers_aggregate.create(other_peers)
       end
@@ -68,7 +68,7 @@ module Nodes
       end
 
       def update_blockchain(request)
-        other_blockchain = YAML.load(request['blockchain'])
+        other_blockchain = YAML.safe_load(request['blockchain'])
 
         return if other_blockchain.nil?
         return if blockchain && other_blockchain.length <= blockchain.length
@@ -99,12 +99,11 @@ module Nodes
 
       def get_public_key(other_peer:)
         send(message: public_key_message, other_peer: other_peer)
-      rescue Protocols::Exceptions::ConnectionError
+      rescue ::Protocols::Exceptions::ConnectionError
         peers_aggregate.delete(other_peer)
       end
 
       def send(message:, other_peer:)
-        # LOGGER.info("[#{peer}] I gossip with #{other_peer}")
         protocol.send(message: message, peer: other_peer)
       end
 

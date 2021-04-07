@@ -25,7 +25,7 @@ module Aggregates
     end
 
     def peers
-      source
+      source.dup
     end
   end
 end

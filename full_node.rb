@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 $BC_NODE = :full_node
 
 require './config/environment'
@@ -13,8 +15,7 @@ client.sync_discovery
 
 Thread.new do
   loop do
-    sleep(rand(3..5)) # waits for server and does some breaks between sending a message
-    # other_peer = client.peers.to_a.sample
+    sleep(rand(3..5))
     client.peers.each do |other_peer|
       client.gossip_with(other_peer: other_peer)
     end

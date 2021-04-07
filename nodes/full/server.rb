@@ -6,7 +6,7 @@ module Nodes
       extend Dry::Initializer
 
       option :client
-      option :protocol, default: proc { Protocols::TCPServer.new }
+      option :protocol, default: proc { ::Protocols::TCP::Server.new }
 
       def run
         protocol.listen(peer: client.peer) do |request|

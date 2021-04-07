@@ -6,8 +6,8 @@ module Nodes
       extend Dry::Initializer
 
       option :peer
-      option :protocol,        default: proc { Protocols::TCPServer.new }
-      option :peers_aggregate, default: proc { Aggregates::Peers.new(owner: peer) }
+      option :protocol,        default: proc { ::Protocols::TCP::Server.new }
+      option :peers_aggregate, default: proc { ::Aggregates::Peers.new(owner: peer) }
 
       def run
         protocol.listen(peer: peer) do |request|
