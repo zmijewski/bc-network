@@ -5,85 +5,41 @@ module Nodes
     class Client
       extend Dry::Initializer
 
-      attr_reader :peer, :discovery
-
-      option :peer,            default: proc { Peer.new(host: IPSocket.getaddress(Socket.gethostname), port: 80) }
-      option :peers_aggregate, default: proc { Aggregates::Peers.new(owner: peer) }
-      option :protocol,        default: proc { Protocols::TCPClient.new }
       option :discovery
+      option :peers_service
+      option :blockchain_service
+      option :transactions_service, default: proc { ::Services::Transactions.new }
 
-      def gossip_with(other_peer:)
-        send(message: gossip_message, other_peer: other_peer)
-      rescue Protocols::Exceptions::ConnectionError
-        peers_aggregate.delete(other_peer)
+      def send_money(peer:)
+        peer_public_key = peers_service.public_key(peer: peer)
+
+        transaction = transactions_service.create(
+          from: peers_service.owner,
+          to: ::PublicPeer.new(peer.to_hash.merge(public_key: peer_public_key)),
+          blockchain: blockchain_service.blockchain
+        )
+
+        blockchain_service.add_to_chain(transaction: transaction)
       end
 
-      def sync_discovery
-        result = send(message: sync_discovery_message, other_peer: discovery)
-        discovery_peers = result.map { |other_peer| Peer.new(other_peer) }
-
-        peers_aggregate.create(discovery_peers)
+      def gossip(peer:)
+        peers_service.gossip(peer: peer, blockchain: blockchain_service.blockchain)
       end
 
-      def notify_discovery_server_down
-        send(message: shutdown_message, other_peer: discovery)
+      def discover
+        peers_service.discover(peer: discovery)
+
+        return unless peers_service.peers.empty?
+
+        blockchain_service.create(peer: peers_service.owner)
       end
-
-      def notify_peers_server_down
-        peers.each do |other_peer|
-          begin
-            send(message: shutdown_message, other_peer: other_peer)
-          rescue Protocols::Exceptions::ConnectionError
-            # cannot reach the other_peer
-          end
-        end
-      end
-
-      def update_peers(request)
-        requested_peers_data = request['peers'] + [(request['peer'])]
-        other_peers = requested_peers_data.map { |other_peer| Peer.new(other_peer) }
-
-        peers_aggregate.create(other_peers)
-      end
-
-      def delete_peer(request)
-        peers_aggregate.delete(Peer.new(request['peer']))
-      end
-
-      def update_blockchain; end
 
       def peers
-        peers_aggregate.peers
+        peers_service.peers
       end
 
-      private
-
-      def send(message:, other_peer:)
-        LOGGER.info("[#{peer}] I gossip with #{other_peer}")
-        protocol.send(message: message, peer: other_peer)
-      end
-
-      def gossip_message
-        {
-          peer: peer.to_hash,
-          event: 'update',
-          blockchain: 'blockchain',
-          peers: peers.map(&:to_hash)
-        }.to_json
-      end
-
-      def sync_discovery_message
-        {
-          peer: peer.to_hash,
-          event: 'update'
-        }.to_json
-      end
-
-      def shutdown_message
-        {
-          peer: peer.to_hash,
-          event: 'remove'
-        }.to_json
+      def ready?
+        blockchain_service.ready?(peer: peers_service.owner)
       end
     end
   end

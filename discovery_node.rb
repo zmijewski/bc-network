@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 $BC_NODE = :discovery_node
 
 require './config/environment'

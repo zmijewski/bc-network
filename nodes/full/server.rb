@@ -5,11 +5,13 @@ module Nodes
     class Server
       extend Dry::Initializer
 
-      option :client
-      option :protocol, default: proc { Protocols::TCPServer.new }
+      option :peers_service
+      option :blockchain_service
+      option :protocol, default: proc { ::Protocols::TCP::Server.new }
+      option :discovery
 
       def run
-        protocol.listen(peer: client.peer) do |request|
+        protocol.listen(peer: peers_service.owner) do |request|
           handle_request(request)
         end
       rescue ::Protocols::Exceptions::ServerShutdown
@@ -21,20 +23,27 @@ module Nodes
       attr_reader :client
 
       def handle_request(request)
+        response = {}
+
         case request['event']
         when 'update'
-          client.update_peers(request)
+          peers_service.handle_peers_update(request)
+          blockchain_service.handle_blockchain_update(request)
         when 'remove'
-          client.delete_peer(request)
+          peers_service.handle_peer_delete(request)
+        when 'public_key'
+          response = peers_service.handle_public_key
         end
 
-        {}.to_json
+        response.to_json
       end
 
       def shutdown_gracefully
         LOGGER.info("Node #{client.peer} is leaving!")
-        client.notify_peers_server_down
-        client.notify_discovery_server_down
+        peers_service.notify_peer_server_down(peer: discovery)
+        peer_service.peers.each do |peer|
+          peer_service.notify_peer_server_down(peer: peer)
+        end
         exit 0
       end
     end
