@@ -15,8 +15,8 @@ class Block
 
   class << self
     def create_genesis_block(public_key:, private_key:)
-      genesis_transaction = Transaction.new(from: nil, to: public_key, amount: 500_000, private_key: private_key)
-      Block.new(previous_block: nil, transaction: genesis_transaction)
+      genesis_transaction = ::Transaction.new(from: nil, to: public_key, amount: 500_000, private_key: private_key)
+      ::Block.new(previous_block: nil, transaction: genesis_transaction)
     end
   end
 

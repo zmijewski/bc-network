@@ -16,7 +16,7 @@ owner_peer = ::OwnerPeer.new(
 
 peers_aggregate    = ::Aggregates::Peers.new(owner: owner_peer)
 peers_service      = ::Services::Peers.new(peers_aggregate: peers_aggregate)
-blockchain_service = ::Services::BlockchainManager.new
+blockchain_service = ::Services::Blockchain.new
 
 client = Nodes::Full::Client.new(
   peers_service: peers_service,

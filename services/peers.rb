@@ -56,7 +56,7 @@ module Services
     end
 
     def handle_peer_delete(request)
-      peers_aggregate.delete(Peer.new(request['peer']))
+      peers_aggregate.delete(::Peer.new(request['peer']))
     end
 
     def handle_public_key

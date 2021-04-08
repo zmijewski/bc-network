@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Services
-  class BlockchainManager
+  class Blockchain
     extend Dry::Initializer
 
     attr_reader :blockchain
@@ -9,7 +9,7 @@ module Services
     option :blockchain, default: proc { nil }
 
     def create(peer:)
-      @blockchain = ::BlockChain.new(public_key: peer.public_key, private_key: peer.private_key)
+      @blockchain = ::Blockchain.new(public_key: peer.public_key, private_key: peer.private_key)
     end
 
     def add_to_chain(transaction:)
@@ -21,7 +21,7 @@ module Services
     end
 
     def handle_blockchain_update(request)
-      other_blockchain = YAML.load(request['blockchain'])
+      other_blockchain = YAML.safe_load(request['blockchain'], [::Blockchain, ::Block, ::Transaction], aliases: true)
 
       return if other_blockchain.nil?
       return if blockchain && other_blockchain.length <= blockchain.length

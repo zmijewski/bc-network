@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class BlockChain
+class Blockchain
   extend Dry::Initializer
 
   attr_reader :blocks
@@ -13,7 +13,7 @@ class BlockChain
     blocks.length
   end
 
-  def add_to_chain(transaction)
+  def add_to_chain(transaction:)
     @blocks.push(Block.new(previous_block: blocks.last, transaction: transaction))
   end
 
