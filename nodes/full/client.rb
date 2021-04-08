@@ -5,136 +5,41 @@ module Nodes
     class Client
       extend Dry::Initializer
 
-      attr_reader :peer, :discovery, :public_key
-
-      option :peer,            default: proc { ::Peer.new(host: IPSocket.getaddress(Socket.gethostname), port: 80) }
-      option :peers_aggregate, default: proc { ::Aggregates::Peers.new(owner: peer) }
-      option :protocol,        default: proc { ::Protocols::TCP::Client.new }
-      option :public_key
-      option :private_key
-      option :blockchain, default: proc { nil }
       option :discovery
+      option :peers_service
+      option :blockchain_service
+      option :transactions_service, default: proc { ::Services::Transactions.new }
 
-      def send_money(other_peer:)
-        other_peer_public_key = get_public_key(other_peer: other_peer)['public_key']
+      def send_money(peer:)
+        peer_public_key = peers_service.public_key(peer: peer)
 
-        amount      = [rand(1..@blockchain.compute_balances[public_key]), 500].min
-        transaction = Transaction.new(from: public_key, to: other_peer_public_key, amount: amount,
-                                      private_key: private_key)
+        transaction = transactions_service.create(
+          from: peers_service.owner,
+          to: ::PublicPeer.new(peer.to_hash.merge(public_key: peer_public_key)),
+          blockchain: blockchain_service.blockchain
+        )
 
-        @blockchain.add_to_chain(transaction)
+        blockchain_service.add_to_chain(transaction: transaction)
       end
 
-      def gossip_with(other_peer:)
-        send(message: gossip_message, other_peer: other_peer)
-      rescue Protocols::Exceptions::ConnectionError
-        peers_aggregate.delete(other_peer)
+      def gossip(peer:)
+        peers_service.gossip(peer: peer, blockchain: blockchain_service.blockchain)
       end
 
-      def sync_discovery
-        result = send(message: sync_discovery_message, other_peer: discovery)
-        discovery_peers = result.map { |other_peer| Peer.new(other_peer) }
+      def discover
+        peers_service.discover(peer: discovery)
 
-        peers_aggregate.create(discovery_peers)
+        return unless peers_service.peers.empty?
 
-        return unless peers.empty?
-
-        @blockchain = BlockChain.new(public_key: public_key, private_key: private_key)
-      end
-
-      def notify_discovery_server_down
-        send(message: shutdown_message, other_peer: discovery)
-      end
-
-      def notify_peers_server_down
-        peers.each do |other_peer|
-          begin
-            send(message: shutdown_message, other_peer: other_peer)
-          rescue Protocols::Exceptions::ConnectionError
-            # cannot reach the other_peer
-          end
-        end
-      end
-
-      def update_peers(request)
-        requested_peers_data = request['peers'] + [(request['peer'])]
-        other_peers = requested_peers_data.map { |other_peer| ::Peer.new(other_peer) }
-
-        peers_aggregate.create(other_peers)
-      end
-
-      def delete_peer(request)
-        peers_aggregate.delete(Peer.new(request['peer']))
-      end
-
-      def update_blockchain(request)
-        other_blockchain = YAML.safe_load(request['blockchain'])
-
-        return if other_blockchain.nil?
-        return if blockchain && other_blockchain.length <= blockchain.length
-        return unless other_blockchain.valid?
-
-        @blockchain = other_blockchain
-        LOGGER.info("My balance: #{@blockchain.compute_balances[public_key]}")
-      end
-
-      def public_key_response
-        {
-          peer: peer,
-          public_key: public_key
-        }
+        blockchain_service.create(peer: peers_service.owner)
       end
 
       def peers
-        peers_aggregate.peers
+        peers_service.peers
       end
 
       def ready?
-        !blockchain.nil? && blockchain.compute_balances[public_key].positive?
-      end
-
-      private
-
-      attr_reader :private_key
-
-      def get_public_key(other_peer:)
-        send(message: public_key_message, other_peer: other_peer)
-      rescue ::Protocols::Exceptions::ConnectionError
-        peers_aggregate.delete(other_peer)
-      end
-
-      def send(message:, other_peer:)
-        protocol.send(message: message, peer: other_peer)
-      end
-
-      def gossip_message
-        {
-          peer: peer.to_hash,
-          event: 'update',
-          blockchain: YAML.dump(blockchain),
-          peers: peers.map(&:to_hash)
-        }.to_json
-      end
-
-      def public_key_message
-        {
-          peer: peer.to_hash,
-          event: 'public_key'
-        }.to_json
-      end
-
-      def sync_discovery_message
-        {
-          peer: peer.to_hash,
-          event: 'update'
-        }.to_json
-      end
-
-      def shutdown_message
-        {
-          peer: peer.to_hash,
-          event: 'remove'
-        }.to_json
+        blockchain_service.ready?(peer: peers_service.owner)
       end
     end
   end

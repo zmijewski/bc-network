@@ -14,7 +14,7 @@ class BlockChain
   end
 
   def add_to_chain(transaction)
-    blocks.push(Block.new(previous_block: blocks.last, transaction: transaction))
+    @blocks.push(Block.new(previous_block: blocks.last, transaction: transaction))
   end
 
   def valid?

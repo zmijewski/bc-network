@@ -4,6 +4,8 @@ module Aggregates
   class Peers
     extend Dry::Initializer
 
+    attr_reader :owner
+
     option :owner
     option :source, default: proc { ::Concurrent::Set.new }
 
