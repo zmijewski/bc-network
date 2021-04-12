@@ -31,6 +31,7 @@ module Nodes
 
         return unless peers_service.peers.empty?
 
+        LOGGER.info('I am progenitor!')
         blockchain_service.create(peer: peers_service.owner)
       end
 

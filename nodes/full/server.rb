@@ -39,10 +39,10 @@ module Nodes
       end
 
       def shutdown_gracefully
-        LOGGER.info("Node #{client.peer} is leaving!")
+        LOGGER.info("Node #{peers_service.owner.host}:#{peers_service.owner.port} is leaving!")
         peers_service.notify_peer_server_down(peer: discovery)
-        peer_service.peers.each do |peer|
-          peer_service.notify_peer_server_down(peer: peer)
+        peers_service.peers.each do |peer|
+          peers_service.notify_peer_server_down(peer: peer)
         end
         exit 0
       end

@@ -14,6 +14,7 @@ class Blockchain
   end
 
   def add_to_chain(transaction:)
+    LOGGER.info("#{Digest::SHA256.hexdigest(transaction.from)} is sending #{transaction.amount} tokens to: #{Digest::SHA256.hexdigest(transaction.to)}")
     @blocks.push(Block.new(previous_block: blocks.last, transaction: transaction))
   end
 
