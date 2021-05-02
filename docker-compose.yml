@@ -1,43 +1,70 @@
 version: "3.9"
+
 services:
-  # fluent-bit:
-  #   image: fluent/fluent-bit
-  #   user: root
-  #   volumes:
-  #     - ./fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
-  #     - ./logs:/logs
-  #     - /var/run/docker.sock:/var/run/docker.sock
-      # - /var/lib/docker/containers:/fluentd/log/containers
-    # logging:
-    #   driver: "local"
-  fluentd:
-    image: fluent/fluentd
+  fluent_bit:
+    image: fluent/fluent-bit
+    # user: root
     volumes:
-      - ./fluentd/conf:/fluentd/etc
+      - ./fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
+      - ./custom_parsers.conf:/fluent-bit/etc/custom_parsers.conf
       - ./logs:/logs
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/containers:/fluentd/log/containers
     ports:
-      - "24224"
-      - "24224/udp"
+      - "24224:24224"
+      - "24224:24224/udp"
     networks:
       test:
+
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    expose:
+      - "3100"
+    networks:
+      test:
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_RENDERING_SERVER_URL: http://renderer:8081/render
+      GF_RENDERING_CALLBACK_URL: http://grafana:3000/
+      GF_LOG_FILTERS: rendering:debug
+    networks:
+      - test
+    volumes:
+      - grafana-storage:/var/lib/grafana grafana/grafana
+
+  renderer:
+    image: grafana/grafana-image-renderer:latest
+    container_name: grafana-image-renderer
+    expose:
+      - "8081"
+    environment:
+      ENABLE_METRICS: "true"
+    networks:
+      - test
+
   discovery_node:
     build: .
     expose:
       - 80
     volumes:
       - .:/app
-    command: bash
+    # command: bash
     depends_on:
-      - fluentd
-    # command: ruby discovery_node.rb
+      - fluent_bit
+    command: ruby discovery_node.rb
     stdin_open: true
     tty: true
     networks:
       test:
     logging:
-      driver: "fluentd"
+      driver: fluentd
       options:
-        fluentd-address: fluentd:24224
         tag: discovery
   full_node:
     build: .
@@ -47,10 +74,21 @@ services:
       - .:/app
     # command: bash
     command: ruby full_node.rb
+    networks:
+      test:
     stdin_open: true
     tty: true
     depends_on:
       - discovery_node
+      - fluent_bit
+    logging:
+      driver: fluentd
+      options:
+        tag: full_node
 
 networks:
   test:
+
+volumes:
+  grafana-storage:
+    external: true

@@ -17,6 +17,14 @@ require './aggregates/peers'
 require './value_objects/peer'
 
 LOGGER = Logger.new($stdout)
+LOGGER.formatter = proc do |severity, datetime, progname, msg|
+  {
+    level: severity,
+    timestamp: datetime.to_s,
+    message: msg
+  }.to_json + $/
+  # print "{\"message\": \"#{msg}\"}"
+end
 
 case $BC_NODE
 when :discovery_node
