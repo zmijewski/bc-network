@@ -3,9 +3,11 @@ version: "3.9"
 services:
   fluent_bit:
     image: fluent/fluent-bit
-    # user: root
+    user: root
     volumes:
       - ./fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
+      - ./fluent-bit-stdout.conf:/fluent-bit/etc/fluent-bit-stdout.conf
+      - ./fluent-bit-service.conf:/fluent-bit/etc/fluent-bit-service.conf
       - ./custom_parsers.conf:/fluent-bit/etc/custom_parsers.conf
       - ./logs:/logs
       - /var/run/docker.sock:/var/run/docker.sock
@@ -65,7 +67,7 @@ services:
     logging:
       driver: fluentd
       options:
-        tag: discovery
+        tag: discovery_node
   full_node:
     build: .
     expose:
