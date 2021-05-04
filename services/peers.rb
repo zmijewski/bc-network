@@ -49,14 +49,14 @@ module Services
     # Server handlers
 
     def handle_peers_update(request)
-      requested_peers_data = request['peers'] + [(request['peer'])]
+      requested_peers_data = request.params[:peers] + [request.params[:peer]]
       other_peers = requested_peers_data.map { |other_peer| ::Peer.new(other_peer) }
 
       peers_aggregate.create(other_peers)
     end
 
     def handle_peer_delete(request)
-      peers_aggregate.delete(::Peer.new(request['peer']))
+      peers_aggregate.delete(::Peer.new(request.params[:peer]))
     end
 
     def handle_public_key
@@ -84,28 +84,28 @@ module Services
         event: 'update',
         blockchain: YAML.dump(blockchain),
         peers: peers.map(&:to_hash)
-      }.to_json
+      }
     end
 
     def public_key_request
       {
         peer: owner.to_hash,
         event: 'public_key'
-      }.to_json
+      }
     end
 
     def sync_discovery_request
       {
         peer: owner.to_hash,
         event: 'update'
-      }.to_json
+      }
     end
 
     def shutdown_request
       {
         peer: owner.to_hash,
         event: 'remove'
-      }.to_json
+      }
     end
   end
 end

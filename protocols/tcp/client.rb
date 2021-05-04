@@ -4,7 +4,8 @@ module Protocols
   module TCP
     class Client
       def send(message: nil, peer: nil)
-        result = process(message, peer)
+        context_request = Context::Request.new(message)
+        result = process(context_request.params.to_json, peer)
         JSON.parse(result)
       rescue JSON::ParserError
         {}

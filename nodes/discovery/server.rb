@@ -22,9 +22,9 @@ module Nodes
       attr_reader :peer, :peers_aggregate
 
       def handle_request(request)
-        peer = Peer.new(request['peer'])
+        peer = Peer.new(request.params[:peer])
 
-        case request['event']
+        case request.params[:event]
         when 'update'
           peers_aggregate.create(peer)
         when 'remove'

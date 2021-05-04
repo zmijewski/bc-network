@@ -8,7 +8,7 @@ class PublicPeer < Peer
 
     raise PublicPeerAttributeMissingError unless peer[:public_key]
 
-    @public_key  = peer[:public_key]
+    @public_key = peer[:public_key]
   end
 end
 

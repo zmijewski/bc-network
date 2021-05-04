@@ -23,16 +23,16 @@ module Nodes
       attr_reader :client
 
       def handle_request(request)
-        response = {}
+        response = { request_id: request.request_id }
 
-        case request['event']
+        case request.params[:event]
         when 'update'
           peers_service.handle_peers_update(request)
           blockchain_service.handle_blockchain_update(request)
         when 'remove'
           peers_service.handle_peer_delete(request)
         when 'public_key'
-          response = peers_service.handle_public_key
+          response.merge!(peers_service.handle_public_key)
         end
 
         response.to_json

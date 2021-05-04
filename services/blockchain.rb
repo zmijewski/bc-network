@@ -21,7 +21,7 @@ module Services
     end
 
     def handle_blockchain_update(request)
-      other_blockchain = YAML.safe_load(request['blockchain'], [::Blockchain, ::Block, ::Transaction], aliases: true)
+      other_blockchain = YAML.safe_load(request.params[:blockchain], [::Blockchain, ::Block, ::Transaction], aliases: true)
 
       return if other_blockchain.nil?
       return if blockchain && other_blockchain.length <= blockchain.length
