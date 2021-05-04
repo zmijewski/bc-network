@@ -1,0 +1,22 @@
+# config file version
+apiVersion: 1
+
+# list of datasources that should be deleted from the database
+deleteDatasources:
+  - name: Loki
+    orgId: 1
+
+# list of datasources to insert/update depending
+# whats available in the database
+datasources:
+  # <string, required> name of the datasource. Required
+- name: Loki
+  # <string, required> datasource type. Required
+  type: loki
+  # <string, required> access mode. direct or proxy. Required
+  # <int> org id. will default to orgId 1 if not specified
+  orgId: 1
+  # <string> url
+  url: http://loki:3100
+  # <bool> allow users to edit datasources from the UI.
+  editable: true

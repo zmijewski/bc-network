@@ -1,5 +1,23 @@
 version: "3.9"
+
 services:
+  fluent_bit:
+    image: fluent/fluent-bit
+    # user: root
+    volumes:
+      - ./fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
+      - ./fluent-bit-stdout.conf:/fluent-bit/etc/fluent-bit-stdout.conf
+      - ./fluent-bit-service.conf:/fluent-bit/etc/fluent-bit-service.conf
+      - ./custom_parsers.conf:/fluent-bit/etc/custom_parsers.conf
+      - ./logs:/logs
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/containers:/fluentd/log/containers
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
+    networks:
+      test:
+
   discovery_node:
     build: .
     expose:
@@ -7,9 +25,17 @@ services:
     volumes:
       - .:/app
     # command: bash
+    depends_on:
+      - fluent_bit
     command: ruby discovery_node.rb
     stdin_open: true
     tty: true
+    networks:
+      test:
+    logging:
+      driver: fluentd
+      options:
+        tag: discovery_node
   full_node:
     build: .
     expose:
@@ -18,8 +44,18 @@ services:
       - .:/app
     # command: bash
     command: ruby full_node.rb
+    networks:
+      test:
     stdin_open: true
     tty: true
     depends_on:
       - discovery_node
+      - fluent_bit
+    logging:
+      driver: fluentd
+      options:
+        tag: full_node
 
+networks:
+  test:
+    external: true

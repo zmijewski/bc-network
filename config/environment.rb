@@ -15,8 +15,20 @@ require './protocols/tcp/client'
 require './protocols/tcp/server'
 require './aggregates/peers'
 require './value_objects/peer'
+require './lib/context/request'
+require './lib/metrics/instruments'
+require './lib/metric'
 
+# $stdout.sync = true
 LOGGER = Logger.new($stdout)
+LOGGER.formatter = proc do |severity, datetime, _, msg|
+  {
+    level: severity,
+    timestamp: datetime.to_s,
+    message: msg
+  }.to_json + "\n"
+  # print "{\"message\": \"#{msg}\"}"
+end
 
 case $BC_NODE
 when :discovery_node
