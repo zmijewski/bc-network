@@ -3,27 +3,28 @@ version: "3.9"
 services:
   fluent_bit:
     image: fluent/fluent-bit
-    # user: root
     volumes:
-      - ./fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
-      - ./fluent-bit-stdout.conf:/fluent-bit/etc/fluent-bit-stdout.conf
-      - ./fluent-bit-service.conf:/fluent-bit/etc/fluent-bit-service.conf
-      - ./custom_parsers.conf:/fluent-bit/etc/custom_parsers.conf
-      - ./logs:/logs
+      - ./../monitoring/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
+      - ./../monitoring/fluent-bit-stdout.conf:/fluent-bit/etc/fluent-bit-stdout.conf
+      - ./../monitoring/fluent-bit-service.conf:/fluent-bit/etc/fluent-bit-service.conf
+      - ./../monitoring/custom_parsers.conf:/fluent-bit/etc/custom_parsers.conf
+      - ./../logs:/logs
       - /var/run/docker.sock:/var/run/docker.sock
       - /var/lib/docker/containers:/fluentd/log/containers
     ports:
       - "24224:24224"
       - "24224:24224/udp"
     networks:
-      test:
+      bc:
 
   discovery_node:
-    build: .
+    build:
+      context: $PWD/blockchain/
+      dockerfile: $PWD/docker/Dockerfile
     expose:
       - 80
     volumes:
-      - .:/app
+      - $PWD/blockchain:/app
     # command: bash
     depends_on:
       - fluent_bit
@@ -31,21 +32,23 @@ services:
     stdin_open: true
     tty: true
     networks:
-      test:
+      bc:
     logging:
       driver: fluentd
       options:
         tag: discovery_node
   full_node:
-    build: .
+    build:
+      context: $PWD/blockchain/
+      dockerfile: $PWD/docker/Dockerfile
     expose:
       - 80
     volumes:
-      - .:/app
+      - $PWD/blockchain:/app
     # command: bash
     command: ruby full_node.rb
     networks:
-      test:
+      bc:
     stdin_open: true
     tty: true
     depends_on:
@@ -57,5 +60,5 @@ services:
         tag: full_node
 
 networks:
-  test:
+  bc:
     external: true

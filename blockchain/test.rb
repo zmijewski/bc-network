@@ -9,10 +9,10 @@ require 'logger'
 require 'yaml'
 require 'digest'
 
-require './lib/pki'
-require './domain/transaction'
-require './domain/block'
-require './domain/block_chain'
+require_relative './lib/pki'
+require_relative './domain/transaction'
+require_relative './domain/block'
+require_relative './domain/block_chain'
 
 PRIV_KEY, PUB_KEY = ::PKI.generate_key_pair
 PRIV_KEY2, PUB_KEY2 = ::PKI.generate_key_pair
