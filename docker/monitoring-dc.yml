@@ -7,7 +7,8 @@ services:
     expose:
       - "3100"
     networks:
-      test:
+      bc:
+      bc-monitoring:
 
   grafana:
     image: grafana/grafana:latest
@@ -19,10 +20,10 @@ services:
       GF_RENDERING_CALLBACK_URL: http://grafana:3000/
       GF_LOG_FILTERS: rendering:debug
     networks:
-      - test
+      - bc-monitoring
     volumes:
-      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
-      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./../monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./../monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
 
   renderer:
     image: grafana/grafana-image-renderer:latest
@@ -32,8 +33,10 @@ services:
     environment:
       ENABLE_METRICS: "true"
     networks:
-      - test
+      - bc-monitoring
 
 networks:
-  test:
+  bc:
+    external: true
+  bc-monitoring:
     external: true

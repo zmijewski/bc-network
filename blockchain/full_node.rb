@@ -2,7 +2,7 @@
 
 $BC_NODE = :full_node
 
-require './config/environment'
+require_relative './config/environment'
 
 PRIV_KEY, PUB_KEY = ::PKI.generate_key_pair
 
@@ -36,12 +36,14 @@ Thread.new do
 end
 
 Thread.new do
-  loop do
+  i = 0
+  while i < 2
     sleep(rand(10..20)) # waits for server and does some breaks between sending a message
     peer = client.peers.to_a.sample
     next unless peer && client.ready?
 
     client.send_money(peer: peer)
+    i += 1
   end
 end
 
