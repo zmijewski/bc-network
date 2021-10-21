@@ -10,7 +10,7 @@ stop-monitoring:
 	docker-compose -f docker/blockchain-dc.yml down
 
 stop-blockchain:
-	docker-compose -f docker/blockchain-dc.yml down
+	docker-compose -f docker/blockchain-dc.yml down --remove-orphans
 
 stop: stop-monitoring stop-blockchain
 
