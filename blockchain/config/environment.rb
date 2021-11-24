@@ -37,6 +37,7 @@ when :full_node
   require_relative '../value_objects/owner_peer'
   require_relative '../value_objects/public_peer'
   require_relative '../lib/pki'
+  require_relative '../lib/rabbitmq/client'
   require_relative '../domain/transaction'
   require_relative '../domain/block'
   require_relative '../domain/blockchain'

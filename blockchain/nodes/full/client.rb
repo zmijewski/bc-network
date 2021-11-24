@@ -8,7 +8,7 @@ module Nodes
       option :discovery
       option :peers_service
       option :blockchain_service
-      option :transactions_service, default: proc { ::Services::Transactions.new }
+      option :transactions_service, default: proc { ::Services::Transactions.new(owner: peers_service.owner) }
 
       def send_money(peer:)
         peer_public_key = peers_service.public_key(peer: peer)

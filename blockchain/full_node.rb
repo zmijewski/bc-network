@@ -47,6 +47,15 @@ Thread.new do
   end
 end
 
+Thread.new do
+  queue_client = RabbitMQ::Client.new
+  queue_client.subscribe(queue_name: 'token_buyout') do |body, delivery_info|
+    parsed = JSON.parse(body)
+    puts "[X] Message from queue: #{parsed['to']}, #{parsed['amount']}"
+    queue_client.acknowledge(delivery_info.delivery_tag)
+  end
+end
+
 server = Nodes::Full::Server.new(
   peers_service: peers_service,
   blockchain_service: blockchain_service,
