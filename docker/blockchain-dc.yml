@@ -20,14 +20,14 @@ services:
   discovery_node:
     build:
       context: $PWD/blockchain/
-      dockerfile: $PWD/docker/Dockerfile
+      dockerfile: ../docker/Dockerfile
     expose:
       - 80
     volumes:
       - $PWD/blockchain:/app
-    # command: bash
     depends_on:
       - fluent_bit
+    # command: bash
     command: ruby discovery_node.rb
     stdin_open: true
     tty: true
@@ -40,7 +40,7 @@ services:
   full_node:
     build:
       context: $PWD/blockchain/
-      dockerfile: $PWD/docker/Dockerfile
+      dockerfile: ../docker/Dockerfile
     expose:
       - 80
     volumes:
@@ -54,10 +54,27 @@ services:
     depends_on:
       - discovery_node
       - fluent_bit
+      - queue
     logging:
       driver: fluentd
       options:
         tag: full_node
+  queue:
+    image: rabbitmq:3.9.10-management
+    expose:
+      - 5672
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - 'rabbitmq_data:/data'
+    networks:
+      bc:
+    stdin_open: true
+    tty: true
+
+volumes:
+  rabbitmq_data:
 
 networks:
   bc:
