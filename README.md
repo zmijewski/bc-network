@@ -36,3 +36,9 @@ Grafana dashboard in your browser and choose dashboard `Blockchain network`. Fro
 start seeing Grafana populate with data from the blockchain.
 
 ![dashboard image](docs/images/dashboard.png "Dashboard")
+
+To check queue logs enter
+
+```
+http://localhost:15672/
+```
