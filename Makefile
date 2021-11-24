@@ -1,5 +1,11 @@
+build-monitoring:
+	docker-compose -f docker/monitoring-dc.yml build
+
 start-monitoring:
 	docker-compose -f docker/monitoring-dc.yml up -d
+
+build-blockchain:
+	docker-compose -f docker/blockchain-dc.yml build
 
 start-blockchain:
 	docker-compose -f docker/blockchain-dc.yml up --scale full_node=3
