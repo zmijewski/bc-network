@@ -12,6 +12,7 @@ class Transaction
   option :amount
   option :private_key
   option :signature, default: proc { PKI.sign(plaintext: message, raw_private_key: private_key) }
+  option :correlation_id, default: proc { "#{SecureRandom.uuid}-#{Time.new.utc.strftime '%Y%m%d'}" }
 
   def valid_signature?
     return true if genesis_transaction?
@@ -24,7 +25,7 @@ class Transaction
   end
 
   def message
-    Digest::SHA256.hexdigest([from, to, amount].join)
+    Digest::SHA256.hexdigest([from, to, amount, correlation_id].join)
   end
 
   def to_s

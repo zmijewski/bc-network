@@ -22,6 +22,17 @@ module Nodes
         blockchain_service.add_to_chain(transaction: transaction)
       end
 
+      def buy_tokens(to:, amount:, correlation_id:)
+        transaction = transactions_service.buy_tokens(
+          from: peers_service.owner,
+          to: to,
+          amount: amount,
+          correlation_id: correlation_id
+        )
+
+        blockchain_service.add_to_chain(transaction: transaction)
+      end
+
       def gossip(peer:)
         peers_service.gossip(peer: peer, blockchain: blockchain_service.blockchain)
       end
