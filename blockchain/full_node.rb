@@ -35,17 +35,17 @@ Thread.new do
   end
 end
 
-Thread.new do
-  i = 0
-  while i < 2
-    sleep(rand(10..20)) # waits for server and does some breaks between sending a message
-    peer = client.peers.to_a.sample
-    next unless peer && client.ready?
+# Thread.new do
+#   i = 0
+#   while i < 2
+#     sleep(rand(10..20)) # waits for server and does some breaks between sending a message
+#     peer = client.peers.to_a.sample
+#     next unless peer && client.ready?
 
-    client.send_money(peer: peer)
-    i += 1
-  end
-end
+#     client.send_money(peer: peer)
+#     i += 1
+#   end
+# end
 
 Thread.new do
   sleep(10) # wait for progenitor to be established
@@ -53,11 +53,6 @@ Thread.new do
     queue_client = RabbitMQ::Client.new
     queue_client.subscribe(queue_name: 'token_buyout') do |delivery_info, properties, body|
       parsed = JSON.parse(body)
-
-      puts "HOLA!!!"
-      puts parsed
-      puts properties
-      puts "ALOH!!!"
 
       client.buy_tokens(
         to: parsed['to'],
