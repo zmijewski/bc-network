@@ -3,12 +3,15 @@
 module Services
   class Transactions
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     extend Dry::Initializer
 
     option :owner
 >>>>>>> a09dfba... Reduced dependency on transactions service
 
+=======
+>>>>>>> b1aca8c... Add buy tokens functionality
     def create(from:, to:, blockchain:)
       amount = [rand(1..blockchain.compute_balances[from.public_key]), 500].min
       ::Transaction.new(
@@ -21,12 +24,13 @@ module Services
 <<<<<<< HEAD
 =======
 
-    def create_public_transaction(request)
+    def buy_tokens(from:, to:, amount:, correlation_id:)
       ::Transaction.new(
-        from: request.params[:from],
-        to: request.params[:to],
-        amount: request.params[:amount],
-        private_key: owner.private_key
+        from: from.public_key,
+        to: to,
+        amount: amount,
+        private_key: from.private_key,
+        correlation_id: correlation_id
       )
     end
 >>>>>>> a09dfba... Reduced dependency on transactions service

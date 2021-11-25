@@ -8,7 +8,7 @@ module Nodes
       option :discovery
       option :peers_service
       option :blockchain_service
-      option :transactions_service, default: proc { ::Services::Transactions.new(owner: peers_service.owner) }
+      option :transactions_service, default: proc { ::Services::Transactions.new }
 
       def send_money(peer:)
         peer_public_key = peers_service.public_key(peer: peer)
@@ -17,6 +17,17 @@ module Nodes
           from: peers_service.owner,
           to: ::PublicPeer.new(peer.to_hash.merge(public_key: peer_public_key)),
           blockchain: blockchain_service.blockchain
+        )
+
+        blockchain_service.add_to_chain(transaction: transaction)
+      end
+
+      def buy_tokens(to:, amount:, correlation_id:)
+        transaction = transactions_service.buy_tokens(
+          from: peers_service.owner,
+          to: to,
+          amount: amount,
+          correlation_id: correlation_id
         )
 
         blockchain_service.add_to_chain(transaction: transaction)

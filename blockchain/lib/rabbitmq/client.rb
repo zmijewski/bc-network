@@ -28,8 +28,8 @@ module RabbitMQ
       queue = channel.queue(queue_name)
 
       begin
-        queue.subscribe(manual_ack: true, block: true) do |delivery_info, _properties, body|
-          handler.call(body, delivery_info)
+        queue.subscribe(manual_ack: true, block: true) do |delivery_info, properties, body|
+          handler.call(delivery_info, properties, body)
         end
       rescue Interrupt => _e
         connection.close

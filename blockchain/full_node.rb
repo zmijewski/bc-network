@@ -48,11 +48,24 @@ Thread.new do
 end
 
 Thread.new do
-  queue_client = RabbitMQ::Client.new
-  queue_client.subscribe(queue_name: 'token_buyout') do |body, delivery_info|
-    parsed = JSON.parse(body)
-    puts "[X] Message from queue: #{parsed['to']}, #{parsed['amount']}"
-    queue_client.acknowledge(delivery_info.delivery_tag)
+  sleep(10) # wait for progenitor to be established
+  if blockchain_service.blockchain.progenitor == owner_peer.public_key
+    queue_client = RabbitMQ::Client.new
+    queue_client.subscribe(queue_name: 'token_buyout') do |delivery_info, properties, body|
+      parsed = JSON.parse(body)
+
+      puts "HOLA!!!"
+      puts parsed
+      puts properties
+      puts "ALOH!!!"
+
+      client.buy_tokens(
+        to: parsed['to'],
+        amount: parsed['amount'],
+        correlation_id: properties[:correlation_id]
+      )
+      queue_client.acknowledge(delivery_info.delivery_tag)
+    end
   end
 end
 

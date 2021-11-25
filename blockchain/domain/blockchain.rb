@@ -26,6 +26,10 @@ class Blockchain
     @blocks.push(Block.new(previous_block: blocks.last, transaction: transaction))
   end
 
+  def progenitor
+    blocks.first.transaction.to if blocks.first.is_a?(Block)
+  end
+
   def valid?
     blocks.all? { |block| block.is_a?(Block) } &&
       blocks.all?(&:valid?) &&
