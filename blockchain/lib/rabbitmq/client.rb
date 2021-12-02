@@ -24,6 +24,11 @@ module RabbitMQ
       connection.create_channel
     }
 
+    def bind(topic:, queue:, routing_key:)
+      exchange = channel.topic(topic)
+      channel.queue(queue).bind(exchange, routing_key: routing_key)
+    end
+
     def subscribe(queue_name:, &handler)
       queue = channel.queue(queue_name)
 
