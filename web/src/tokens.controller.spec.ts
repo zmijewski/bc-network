@@ -10,7 +10,10 @@ describe('TokensController', () => {
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
       controllers: [TokensController],
-      providers: [PurchaseTokenService],
+      providers: [
+        PurchaseTokenService,
+        { provide: 'BC_NETWORK', useValue: {} }
+      ],
     }).compile();
 
     purchaseTokenService = app.get<PurchaseTokenService>(PurchaseTokenService);

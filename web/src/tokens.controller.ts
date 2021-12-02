@@ -1,4 +1,4 @@
-import { Controller, HttpCode, Param, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, Post } from '@nestjs/common';
 import { PurchaseTokenService } from './purchase-token.service';
 import { PurchaseTokenDto } from './purchase-token.dto';
 
@@ -8,7 +8,7 @@ export class TokensController {
 
   @Post()
   @HttpCode(202)
-  buy(@Param() params: PurchaseTokenDto) {
+  buy(@Body() params: PurchaseTokenDto) {
     this.purchaseTokenService.process(params);
   }
 }
