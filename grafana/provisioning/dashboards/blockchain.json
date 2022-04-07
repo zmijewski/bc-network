@@ -225,7 +225,7 @@
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
-            "sum"
+            "lastNotNull"
           ],
           "fields": "",
           "values": false
@@ -236,7 +236,7 @@
       "pluginVersion": "7.5.3",
       "targets": [
         {
-          "expr": "sum(sum_over_time({message_name=\"new_block\"} | json | unwrap message_properties_tokens [1s])) by (message_properties_from)",
+          "expr": "sum(sum_over_time({message_name=\"new_block\"} | json | unwrap message_properties_tokens [24h])) by (message_properties_from)",
           "hide": false,
           "instant": false,
           "legendFormat": "",
@@ -290,7 +290,7 @@
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
-            "sum"
+            "lastNotNull"
           ],
           "fields": "",
           "values": false
@@ -301,7 +301,7 @@
       "pluginVersion": "7.5.3",
       "targets": [
         {
-          "expr": "sum(sum_over_time({message_name=\"new_block\"} | json | unwrap message_properties_tokens [1s])) by (message_properties_to)",
+          "expr": "sum(sum_over_time({message_name=\"new_block\"} | json | unwrap message_properties_tokens [24h])) by (message_properties_to)",
           "hide": false,
           "instant": false,
           "legendFormat": "",
