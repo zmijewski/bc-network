@@ -1,23 +1,23 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { TokensController } from './tokens.controller';
-import { PurchaseTokenService } from './purchase-token.service';
-import { PurchaseTokenDto } from './purchase-token.dto';
+import { PurchaseController } from './purchase.controller';
+import { PurchaseService } from './purchase.service';
+import { PurchaseTokenDto } from './dto';
 
-describe('TokensController', () => {
-  let purchaseTokenService: PurchaseTokenService;
-  let tokensController: TokensController;
+describe('PurchaseController', () => {
+  let purchaseTokenService: PurchaseService;
+  let purchaseController: PurchaseController;
 
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
-      controllers: [TokensController],
+      controllers: [PurchaseController],
       providers: [
-        PurchaseTokenService,
+        PurchaseService,
         { provide: 'BC_NETWORK', useValue: {} }
       ],
     }).compile();
 
-    purchaseTokenService = app.get<PurchaseTokenService>(PurchaseTokenService);
-    tokensController = app.get<TokensController>(TokensController);
+    purchaseTokenService = app.get<PurchaseService>(PurchaseService);
+    purchaseController = app.get<PurchaseController>(PurchaseController);
   });
 
   describe('buy', () => {
@@ -27,16 +27,16 @@ describe('TokensController', () => {
       correlationId: 'deb98e00-3b4d-45a4-9949-9e4acc7124a8-20211129'
     }
 
-    it('calls PurchaseTokenService', () => {
+    it('calls PurchaseService', () => {
       const spy: jest.SpyInstance = jest.spyOn(purchaseTokenService, 'process')
 
-      tokensController.buy(purchaseTokenDto);
+      purchaseController.buy(purchaseTokenDto);
 
       expect(spy).toHaveBeenCalled();
     });
 
     it('returns no response', () => {
-      expect(tokensController.buy(purchaseTokenDto)).toBeUndefined();
+      expect(purchaseController.buy(purchaseTokenDto)).toBeUndefined();
     });
   });
 });
