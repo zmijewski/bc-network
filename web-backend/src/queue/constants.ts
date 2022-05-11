@@ -1,0 +1,1 @@
+export const AMQP_CONNECTION = 'AMQP_CONNECTION';

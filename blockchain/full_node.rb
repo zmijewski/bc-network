@@ -51,13 +51,14 @@ Thread.new do
   sleep(10) # wait for progenitor to be established
   if blockchain_service.blockchain.progenitor == owner_peer.public_key
     queue_client = RabbitMQ::Client.new
-    queue_client.subscribe(queue_name: 'token_buyout') do |delivery_info, properties, body|
+    queue_client.bind(topic: 'exchange1', queue: 'token_purchase', routing_key: 'token_purchase')
+    queue_client.subscribe(queue_name: 'token_purchase') do |delivery_info, _properties, body|
       parsed = JSON.parse(body)
 
       client.buy_tokens(
         to: parsed['to'],
         amount: parsed['amount'],
-        correlation_id: properties[:correlation_id]
+        correlation_id: parsed[:correlation_id]
       )
       queue_client.acknowledge(delivery_info.delivery_tag)
     end
